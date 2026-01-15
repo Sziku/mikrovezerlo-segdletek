@@ -1,0 +1,18 @@
+#include "Arduino_SensorKit.h"
+#define Environment Environment_I2C
+
+void setup() {
+  Wire.begin();
+  Serial.begin(9600);
+  Environment.begin();
+}
+
+void loop() {
+  Serial.print("   Temperature = ");
+  Serial.print(Environment.readTemperature()); //print homerseklet
+  Serial.print(" C  ");
+  Serial.print("Humidity = ");
+  Serial.print(Environment.readHumidity()); //print paratartalom
+  Serial.println(" %");
+  delay(2000);
+}

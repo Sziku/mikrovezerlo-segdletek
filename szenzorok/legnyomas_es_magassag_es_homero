@@ -1,0 +1,20 @@
+#include "Arduino_SensorKit.h"
+
+
+void setup() {
+  Serial.begin(9600);
+  Pressure.begin();
+}
+
+void loop() {
+  Serial.print("Temp2 ");
+  Serial.print(Pressure.readTemperature()); //print homerseklet
+  Serial.print("C   ");
+  Serial.print("Pressure: ");
+  Serial.print(Pressure.readPressure()); //print legnyomas
+  Serial.print(" Pa  ");
+  Serial.print("Altitude: ");
+  Serial.print(Pressure.readAltitude()); //print magassag
+  Serial.println("m");
+  delay(2000);
+}

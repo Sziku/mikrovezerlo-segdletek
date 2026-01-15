@@ -1,0 +1,57 @@
+const int potentiometer = A0;
+const int buzzerPin = 5;
+const int buttonPin = 4;
+const int ledPin = 6;
+
+void setup(){
+  Serial.begin(9600);
+  pinMode(potentiometer, INPUT);
+  pinMode(buzzerPin, OUTPUT);
+  pinMode(buttonPin, INPUT);
+  pinMode(ledPin, OUTPUT);
+  digitalWrite(ledPin, HIGH);
+}
+
+int ledState = HIGH;
+int buttonState;
+int lastButtonState = LOW;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+const int MAXFREQ = 20000;
+const int MINFREQ = 34;
+
+void loop(){
+  int sensor_value = analogRead(potentiometer);
+  int value = map(sensor_value, 0, 1023, MINFREQ, MAXFREQ);
+  int reading = digitalRead(buttonPin);
+
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (reading != buttonState) {
+      buttonState = reading;
+      if (buttonState == HIGH) {
+        Serial.println("Csipog");
+        digitalWrite(ledPin, LOW);
+        int start = millis();
+        for (int i=0; i< 10; i++){
+          tone(buzzerPin, 400, 3000);
+          delay(100);
+          Serial.println(i);
+        }
+        Serial.println(millis()-start);
+        noTone(buzzerPin);
+        delay(100);
+      }
+    }
+  }
+  lastButtonState = reading;
+  digitalWrite(ledPin, HIGH);
+  noTone(buzzerPin);
+
+}
+
+
+

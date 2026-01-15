@@ -1,0 +1,54 @@
+const int LEDPIN = 6;
+const int BUTTONPIN = 4;
+
+
+void setup() {
+  pinMode(LEDPIN, OUTPUT);
+  pinMode(BUTTONPIN, INPUT);
+  Serial.begin(9600);
+}
+
+unsigned int  startTime = 0;
+unsigned state = 0;
+int buttonSTATE = LOW;
+int currentButtonState = LOW;
+int ledState = LOW;
+int flag = 0;
+void loop() {
+  buttonSTATE = digitalRead(BUTTONPIN);
+  if(!buttonSTATE == currentButtonState){
+    if(currentButtonState == LOW){
+      Serial.println("GOMB LENYOMVA");
+      startTime = millis();
+    }
+    if(currentButtonState == HIGH){
+      Serial.println("GOMB FELENGEDVE");
+    }
+    currentButtonState = digitalRead(BUTTONPIN);
+  }
+  if(buttonSTATE == currentButtonState && currentButtonState == HIGH){
+    Serial.println("GOMB NYOMVATARTVA");
+    if(millis()- startTime < 2000){
+      Serial.print("SHORT ");
+    }
+     if(millis()- startTime >= 5000){
+      Serial.println("LONG");
+      flag = 0;
+
+    }
+  }
+  if(flag == 0){
+    digitalWrite(LEDPIN, LOW);
+  }
+  if(flag == 1){
+    Serial.println("FELKESZUL");
+    digitalWrite(LEDPIN; HIGH);
+    delay(300);
+    digitalWrite(LEDPIN, LOW);
+    delay(300);
+  }
+  if(flag == 2){
+    Serial.println("RIASZTAS");
+    digitalWrite(LEDPIN, HIGH);
+  }
+}

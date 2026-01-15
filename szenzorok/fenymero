@@ -1,0 +1,15 @@
+int light_sensor = A3;
+
+
+void setup() {
+  Serial.begin(9600);
+}
+
+void loop() {
+  int raw_light = analogRead(light_sensor); //nyers analogjel
+  int light = map(raw_light, 0, 1023, 0, 100); // mapoljuk a nyers adatokat 0-tol 100-ig
+
+  Serial.print("Light level: ");
+  Serial.println(light);
+  delay(2000);
+}

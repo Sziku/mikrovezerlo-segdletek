@@ -1,0 +1,89 @@
+#include "Arduino_SensorKit.h"
+
+#define POTPIN A0
+#define LEDPIN 6
+#define BUTTONPIN 4
+
+char myString[] = "Szenzorok";
+char *menuTomb[] = {"LED: ","GOMB: ","POTM: "};
+const int menuSize = 3;
+int sensorTomb[menuSize];
+
+
+void sensors(){
+  int sensor_value = analogRead(POTPIN);
+  int value = map(sensor_value, 0, 1023, 1, 100);
+
+  sensorTomb[0] = digitalRead(LEDPIN);
+  sensorTomb[1] = digitalRead(BUTTONPIN);
+  sensorTomb[2] = value;
+}
+void LedControl(){
+  if(sensorTomb[1] > 0){
+    digitalWrite(LEDPIN, HIGH);
+  }else{
+    digitalWrite(LEDPIN, LOW);
+  }
+}
+
+void OledWrite(int x, int y, const char *content){
+  Oled.setCursor(x,y);
+  Oled.println(content);
+}
+
+void OledWrite(int x, int y, int content){
+  Oled.setCursor(x,y);
+  Oled.println(content);
+}
+
+void selectMenu(int value){
+  if(value == 0 || value == 100){
+    OledWrite(0, 0," ");
+  }
+  if(value > 1 && value < 33){
+    OledWrite(0, 1,"*");
+  }else{
+    OledWrite(0, 1," ");
+  }
+  if (value > 33 && value < 66){
+    OledWrite(0, 2,"*");
+  }else{
+    OledWrite(0, 2," ");
+  }
+  if (value > 66 && value < 100){
+    OledWrite(0, 3,"*");
+  }else{
+    OledWrite(0, 3," ");
+  }
+
+}
+
+void setup() {
+  Serial.begin(9600);
+  Oled.begin();
+  Oled.setFlipMode(true);
+  pinMode(POTPIN, INPUT);
+  pinMode(LEDPIN, OUTPUT);
+  pinMode(BUTTONPIN, OUTPUT);
+}
+
+void loop() {
+  sensors();
+  LedControl();
+  Oled.setFont(u8x8_font_chroma48medium8_r);
+  OledWrite(4,0,myString);
+  Serial.println(myString);
+  selectMenu(sensorTomb[2]);
+  for(int i=0; i<menuSize; i++){
+    Serial.println(menuTomb[i]);
+    OledWrite(1,i+1,menuTomb[i]);
+    if(i < 2 && sensorTomb[i] == 0){
+      OledWrite(7,i+1,"OFF");
+    }else{
+      OledWrite(7,i+1,"ON ");
+    }
+  }
+  OledWrite(7,3,sensorTomb[2]);
+  //Oled.refreshDisplay();
+  delay(500);
+}

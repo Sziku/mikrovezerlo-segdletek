@@ -1,0 +1,198 @@
+#include "Arduino_SensorKit.h"
+#define Environment Environment_I2C
+
+
+const int LEDPIN = 6;
+const int FENYPIN = A3;
+
+int fenyerosseg = 0;
+int fenyerossegAtlag = 0;
+int keses = 1000;
+int homerseklet = 0;
+int para = 0;
+int legnyomas = 0;
+int magassag = 0;
+int nyomasok[20];
+int index = 0;
+int eso = 0;
+int currentMilli = 0;
+int lastMilli = millis();
+int lastMilli2 = millis();
+int led = LOW;
+
+void ledStatus();
+void nappalVagyEjszaka();
+void sensorStatus();
+void komfort();
+float mozgoAtlag();
+void mozgoAtlagKiiro();
+int esoelorejelzes();
+void ledvillogtato(int value);
+
+void setup() {
+  pinMode(LEDPIN, OUTPUT);
+  Serial.begin(9600);
+  digitalWrite(LEDPIN, LOW);
+  Oled.begin();
+  Oled.setFlipMode(true);
+  Environment.begin();
+  Pressure.begin();
+}
+
+void loop() {
+  int nyers_feny = analogRead(FENYPIN);
+  fenyerosseg = map(nyers_feny,0,1023,1,100);
+  homerseklet = Environment.readTemperature();
+  para = Environment.readHumidity();
+  legnyomas = Pressure.readPressure();
+  magassag = Pressure.readAltitude();
+
+  Oled.setFont(u8x8_font_chroma48medium8_r); //betu font beallitasa
+  Oled.setCursor(0, 0);    // kurzor elhelyezese koordnita(x tengely, y tengely)
+  Oled.print("F: ");
+  for(int i = 0; i < 10; i++){
+    fenyerossegAtlag += fenyerosseg;
+  }
+  fenyerossegAtlag /= 10;
+  Oled.print(fenyerossegAtlag);
+
+  Oled.setCursor(0, 1);
+  Oled.print("H: ");
+  Oled.print(homerseklet);
+  Oled.print("C");
+  Oled.setCursor(0, 2);
+  Oled.print("P: ");
+  Oled.print(para);
+  Oled.print("%");
+  Oled.setCursor(0, 3);
+  Oled.print("L: ");
+  Oled.print(mozgoAtlag());
+  Oled.print("Pa");
+  Oled.setCursor(0, 4);
+  Oled.print("M: ");
+  Oled.print(magassag);
+  Oled.print("m");
+  komfort();
+  Oled.refreshDisplay();    // kijelzo frissitese
+  sensorStatus();
+  Serial.print("\n");
+  nappalVagyEjszaka();
+  Serial.print(" ");
+  ledStatus();
+  Serial.print(" ");
+  mozgoAtlagKiiro();
+  Serial.print("\n");
+  fenyerossegAtlag = 0;
+  currentMilli = millis();
+
+  eso = esoelorejelzes();
+  ledvillogtato(eso);
+  delay(keses);
+}
+
+void ledStatus(){
+  if(digitalRead(LEDPIN) == HIGH){
+    Serial.print("LED: ON");
+  }else{
+    Serial.print("LED: OFF");
+  }
+}
+
+void nappalVagyEjszaka(){
+  if(fenyerosseg < 20){
+    digitalWrite(LEDPIN, HIGH);
+    Serial.print("ESTE VAN");
+  }else{
+    digitalWrite(LEDPIN, LOW);
+    Serial.print("NAPPAL VAN");
+  }
+}
+
+void sensorStatus(){
+  Serial.print("Fenyero=");
+  Serial.print(fenyerosseg);
+  Serial.print(" Homerseklet=");
+  Serial.print(homerseklet);
+  Serial.print(" Para=");
+  Serial.print(para);
+  Serial.print(" Legnyomas=");
+  Serial.print(legnyomas);
+  Serial.print(" Magassag=");
+  Serial.print(magassag);
+  Serial.print(" Eso=");
+  Serial.print(eso);
+}
+void komfort(){
+  Oled.setCursor(6, 0);
+  if(homerseklet >= 20 && homerseklet <= 26){
+    if(para >= 40 && para <= 60){
+      Oled.print(":)");
+    }
+    Oled.print(":|");
+  }else{
+    Oled.print(":(");
+  }
+}
+
+float mozgoAtlag(){
+  float eredemeny = 0;
+
+
+  if(index == 20){
+    for(int i = 1; i<20; i++){
+      nyomasok[i-1] = nyomasok[i];
+    }
+    index = 19;
+  }
+
+  nyomasok[index] = legnyomas;
+  index++;
+
+  for(int i=0; i < 20; i++){
+    eredemeny += nyomasok[i];
+  }
+
+  eredemeny /= 20;
+
+  return eredemeny;
+}
+
+void mozgoAtlagKiiro(){
+  for(int i = 0; i< 20; i++){
+    Serial.print(nyomasok[i]);
+    Serial.print(" ");
+  }
+}
+
+int esoelorejelzes(){
+  Oled.setCursor(0,5);
+  if(nyomasok[19] - nyomasok[0] < -200){
+    Oled.print("Eso var     ");
+    return 1;
+  }
+  if(nyomasok[19] - nyomasok[0] > 200){
+    Oled.print("Javulas");
+    return 2;
+  }
+  Oled.print("Eso nem var");
+  return 0;
+}
+void ledvillogtato(int value){
+
+
+  if (value == 1){
+    if (currentMilli - lastMilli > 200){
+      lastMilli = currentMilli;
+      led = led==LOW ? HIGH : LOW;
+      digitalWrite(LEDPIN, led);
+    }
+  }
+
+  if (value == 2){
+    if (currentMilli - lastMilli > 700){
+      lastMilli = currentMilli;
+      led = led==LOW ? HIGH : LOW;
+      digitalWrite(LEDPIN, led);
+    }
+  }
+}

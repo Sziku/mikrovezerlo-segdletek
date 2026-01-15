@@ -1,0 +1,82 @@
+#include <StateMachine.h>
+
+const int STATE_DELAY = 100;
+const int LED = 6;
+const int buttonPin = 4;
+bool gomb = LOW;
+const int buzzer = 5;
+int potmeter = A0;
+int value = 0;
+
+StateMachine machine = StateMachine();
+
+void state0(){
+  Serial.print("State 0:  ");
+  Serial.println(value);
+  if(machine.executeOnce){
+    Serial.println("Execute Once");
+    digitalWrite(LED,!digitalRead(LED));
+  }
+}
+
+void state1(){
+  Serial.print("State 1:  ");
+  Serial.println(value);
+  if(machine.executeOnce){
+    Serial.println("Execute Twice");
+    digitalWrite(LED,!digitalRead(LED));
+  }
+}
+bool transitionS1S0(){
+  if(value > 90){
+    return true;
+  }
+  return false;
+}
+
+State* S0 = machine.addState(&state0);
+State* S1 = machine.addState(&state1);
+
+void setup() {
+  Serial.begin(115200);
+  pinMode(LED,OUTPUT);
+  pinMode(buzzer, OUTPUT);
+  pinMode(potmeter, INPUT);
+  S1->addTransition(&transitionS1S0,S0);
+}
+int buttonState;
+int lastButtonState = LOW;
+unsigned long lastDebounceTime = 0;
+unsigned long debounceDelay = 50;
+void loop() {
+  machine.run();
+  delay(STATE_DELAY);
+  int reading = digitalRead(buttonPin);
+  int sensor_value = analogRead(potmeter);
+  value = map(sensor_value, 0, 1023, 0, 100);
+
+  if (reading != lastButtonState) {
+    lastDebounceTime = millis();
+  }
+
+  if ((millis() - lastDebounceTime) > debounceDelay) {
+    if (reading != buttonState) {
+      buttonState = reading;
+      if (buttonState == HIGH) {
+          Serial.println("Gomb lenyomva");
+          if(digitalRead(LED)==HIGH){
+            machine.transitionTo(S1);
+            tone(buzzer, 400, 3000);
+          }
+          else{
+            machine.transitionTo(S0);
+          }
+
+        }
+      }
+    }
+  lastButtonState = reading;
+
+}
+
+

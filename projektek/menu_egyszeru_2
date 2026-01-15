@@ -1,0 +1,71 @@
+#include <SPI.h>
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#define SCREEN_WIDTH 128 // OLED display width, in pixels
+#define SCREEN_HEIGHT 64 // OLED display height, in pixels
+// Declaration for SSD1306 display connected using I2C
+#define OLED_RESET     -1 // Reset pin # (or -1 if sharing Arduino reset pin)
+#define SCREEN_ADDRESS 0x3C
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
+
+
+#define POTPIN A0
+#define BUTTONPIN 4
+
+void setup() {
+  Serial.begin(9600);
+  // initialize the OLED object
+  if(!display.begin(SSD1306_SWITCHCAPVCC, SCREEN_ADDRESS)) {
+    Serial.println(F("SSD1306 allocation failed"));
+    for(;;); // Don't proceed, loop forever
+  }
+  display.setRotation(2);
+  pinMode(POTPIN, INPUT);
+  pinMode(BUTTONPIN, INPUT);
+}
+
+char *menuItems[] ={"Item1", "Item2", "Item3", "Item4", "Item5", "Item6", "Item7", "Item8", "Item9", "Item10", "Item11"};
+const int menuItemsSize = 11;
+int scroll = 0;
+int valueItems[menuItemsSize];
+char *valueNames[] = {"OFF", "ON", "ERROR"};
+void loop() {
+  int sensor_value = analogRead(POTPIN);
+  int value = map(sensor_value, 0, 1023, 0, menuItemsSize);
+  if(value > 8){
+      scroll =  value - 8;
+  }else{
+    scroll = 0;
+  }
+  display.clearDisplay();
+  // Display Text
+  display.setTextSize(1);
+
+  for(int i = 0; i < 8; i++){
+    display.setCursor(0, i * 8);
+    Serial.print(value);
+    Serial.print("  ");
+    Serial.print(i + scroll);
+    Serial.println("");
+    if(i + scroll == ((value > 8) ? value - 1 : value)){
+      display.setTextColor(BLACK, WHITE);
+    }else{
+      display.setTextColor(WHITE);
+    }
+    display.println(menuItems[i + scroll]);
+    display.setCursor(40, i * 8);
+    display.setTextColor(WHITE);
+    display.println(valueNames[valueItems[i + scroll]]);
+  }
+  if(digitalRead(BUTTONPIN) == HIGH){
+    if(valueItems[value] == 2){
+      valueItems[value] = 0;
+    }else{
+      valueItems[value] += 1;
+    }
+  }
+  display.display();
+  delay(1000);
+  display.clearDisplay();
+}

@@ -1,0 +1,15 @@
+#include "Arduino_SensorKit.h"
+
+
+void setup() {
+  Oled.begin();
+  Oled.setFlipMode(true); // tukrozi a kijelzot
+}
+
+void loop() {
+  Oled.setFont(u8x8_font_chroma48medium8_r); //betu font beallitasa
+  Oled.setCursor(0, 33);    // kurzor elhelyezese koordnita(x tengely, y tengely)
+  Oled.print("Hello World");
+  Oled.refreshDisplay();    // kijelzo frissitese
+  delay(1000);
+}
