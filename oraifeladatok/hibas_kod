@@ -1,0 +1,120 @@
+// Kapsz egy programot, ami részben működik, de több hibát tartalmaz.
+// Feladatod:
+// Hibakeresés és javítás, hogy minden szenzor és az OLED is működjön.
+// Bővítés: menü, riasztások, min/max, nem blokkoló frissítés, stb.
+// Elvárt működés (a végén)
+// OLED-en megjelennek az értékek:
+// fény (A0) %
+// potméter (A1) %
+// hőmérséklet (°C) és páratartalom (%)
+// nyomás (hPa) és magasság (m)
+// Gombbal oldalak váltása
+// LED riaszt (pl. túl sötét / túl meleg / túl alacsony nyomás)
+// Potméterrel állítható küszöb vagy frissítési idő
+//
+//
+// Bővítési követelmények:
+// Miután a hibás kódot kijavították és minden működik:
+// Oldalváltás gombbal
+// rövid nyomás: oldal 1/2 váltás
+// oldal 1: aktuális értékek
+// oldal 2: min/max értékek (T, H, P, fény)
+// Potméter funkció (válassz egyet)
+// (A) potméter állítsa a „sötét” LED-küszöböt (10–90%)
+// vagy (B) potméter állítsa a frissítési időt (pl. 200–2000 ms)
+// Nem blokkoló működés
+// delay() helyett millis() alapú frissítés
+// Riasztás
+// ha T > 30°C VAGY H > 70% VAGY P < 990 hPa, akkor villogjon a LED és az OLED-en jelenjen meg „ALARM”.
+
+#include <Wire.h>
+#include <Adafruit_GFX.h>
+#include <Adafruit_SSD1306.h>
+#include <DHT.h>
+#include <Adafruit_BMP280.h>
+
+#define SCREEN_WIDTH 128
+#define SCREEN_HEIGHT 64
+
+
+#define OLED_ADDR 0x3D
+
+// DHT
+#define DHTPIN 2
+#define DHTTYPE DHT22
+DHT dht(DHTPIN, DHTTYPE);
+
+// BMP280
+Adafruit_BMP280 bmp;
+
+// Pins
+const int LDR_PIN = A0;
+const int POT_PIN = A0;
+const int BTN_PIN = 3;
+const int LED_PIN = LED_BUILTIN;
+
+Adafruit_SSD1306 display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, -1);
+
+float seaLevel_hPa = 101.325;
+
+void setup() {
+  Serial.begin(115200);
+  Wire.begin();
+
+  pinMode(LED_PIN, OUTPUT);
+
+
+  pinMode(BTN_PIN, INPUT);
+
+
+  analogReadResolution(12);
+
+  if (!display.begin(SSD1306_SWITCHCAPVCC, OLED_ADDR)) {
+    Serial.println("OLED init fail");
+  }
+
+
+  if (!bmp.begin(0x77)) {
+    Serial.println("BMP280 init fail");
+  }
+
+  display.clearDisplay();
+  display.setTextSize(1);
+  display.setTextColor(SSD1306_WHITE);
+}
+
+void loop() {
+  int ldr = analogRead(LDR_PIN);
+  int pot = analogRead(POT_PIN);
+
+
+  int lightPct = map(ldr, 0, 1023, 0, 100);
+  int potPct   = map(pot, 0, 1023, 0, 100);
+
+  int btn = digitalRead(BTN_PIN);
+
+  float t = dht.readTemperature();
+  float h = dht.readHumidity();
+
+  float p_hPa = bmp.readPressure() / 100.0;
+  float alt_m = bmp.readAltitude(seaLevel_hPa);
+
+  if (lightPct < 30) digitalWrite(LED_PIN, HIGH);
+  else digitalWrite(LED_PIN, LOW);
+
+  display.clearDisplay();
+  display.setCursor(0, 0);
+  display.print("Light: "); display.print(lightPct); display.println("%");
+  display.print("Pot:   "); display.print(potPct);   display.println("%");
+  display.print("Btn:   "); display.println(btn);
+
+  display.print("T: "); display.print(t); display.println(" C");
+  display.print("H: "); display.print(h); display.println(" %");
+
+  display.print("P: "); display.print(p_hPa); display.println(" hPa");
+  display.print("Alt: "); display.print(alt_m); display.println(" m");
+
+
+
+  delay(500);
+}
