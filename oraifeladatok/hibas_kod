@@ -2,7 +2,6 @@
 // Feladatod:
 // Hibakeresés és javítás, hogy minden szenzor és az OLED is működjön.
 // Bővítés: menü, riasztások, min/max, nem blokkoló frissítés, stb.
-// Elvárt működés (a végén)
 // OLED-en megjelennek az értékek:
 // fény (A0) %
 // potméter (A1) %
